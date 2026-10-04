@@ -4,25 +4,34 @@ An applied machine-learning project focused on identifying booking characteristi
 
 ## Primary workflow
 
-[`src/hotel_cancellation_model.py`](src/hotel_cancellation_model.py) is the audited implementation. It creates a stratified hold-out set, automatically separates numeric and categorical predictors, and places imputation, one-hot encoding and scaling inside scikit-learn pipelines so learned preprocessing remains inside cross-validation folds.
+[`src/hotel_cancellation_model.py`](src/hotel_cancellation_model.py) is the audited implementation. It creates a stratified hold-out set, excludes common booking/reservation identifier fields, automatically separates numeric and categorical predictors, and places imputation, one-hot encoding and scaling inside scikit-learn pipelines so learned preprocessing remains inside cross-validation folds.
 
-The script tunes a balanced logistic-regression baseline and a balanced Random Forest on training data only, then reports accuracy, balanced accuracy and weighted F1 on the untouched test set. Metrics are written to `outputs/metrics.json`.
+The script tunes a balanced Logistic Regression baseline and a balanced Random Forest on training data only, then reports accuracy, balanced accuracy and weighted F1 on the untouched test set. Metrics and the list of excluded predictor columns are written to `outputs/metrics.json`.
+
+## Leakage safeguards
+
+- The target is removed before predictor processing.
+- Common identifiers such as `Booking_ID`, reservation IDs and booking-reference fields are excluded automatically.
+- Dataset-specific fields that would not be available at prediction time can be excluded explicitly with repeated `--drop-column` arguments.
+- Learned preprocessing stays inside each cross-validation fold.
+- The final held-out test set is not used for tuning.
 
 ## Repository structure
 
 - [`src/hotel_cancellation_model.py`](src/hotel_cancellation_model.py) — audited modelling pipeline.
-- [`data/README.md`](data/README.md) — expected dataset layout and target handling.
-- [`requirements.txt`](requirements.txt) — direct Python dependencies.
+- [`tests/test_smoke.py`](tests/test_smoke.py) — lightweight schema/guard tests.
+- [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — Python 3.12 CI.
+- [`data/README.md`](data/README.md) — expected dataset layout and provenance limitations.
+- [`requirements.txt`](requirements.txt) — pinned direct Python dependencies.
 - [`archive/hotel_cancellation_modeling.ipynb`](archive/hotel_cancellation_modeling.ipynb) — original exploratory notebook retained for provenance.
-- [`.gitignore`](.gitignore) — local environment/data exclusions.
 
 ## Dataset
 
-The original project was based on the Hotel Reservations Classification dataset and notes that the exercise data were modified. The dataset includes adults/children, weekday and weekend stays, meal plan, parking, room type, lead time, arrival information, market segment, repeat-guest history, previous cancellations/completed bookings, room price, special requests and booking status.
-
-Because the modified project dataset is not committed, the audited script accepts an explicit data path/target when needed.
+The historical project was based on a Hotel Reservations Classification exercise whose data were modified. The exact modified CSV and transformation history are not available in the repository, so the project does not claim that an arbitrary public dataset with a similar name reproduces the original exercise. See [`data/README.md`](data/README.md).
 
 ## Run locally
+
+The pinned environment is tested in CI with Python 3.12.
 
 ```bash
 python -m venv .venv
@@ -38,6 +47,12 @@ If the booking-status column cannot be inferred automatically:
 python src/hotel_cancellation_model.py --target Booking_Status
 ```
 
+To exclude a dataset-specific field that is an identifier or would not be known at prediction time:
+
+```bash
+python src/hotel_cancellation_model.py --drop-column some_field --drop-column another_field
+```
+
 ## Scope
 
-This is an applied portfolio project demonstrating reproducible classification around a hospitality business problem. It is not a deployed cancellation-scoring service.
+This is an applied portfolio project demonstrating leakage-aware classification around a hospitality business problem. It is not a deployed cancellation-scoring service.
