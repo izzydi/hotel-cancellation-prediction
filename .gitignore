@@ -1,0 +1,10 @@
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+venv/
+.env
+.Rhistory
+.RData
+.Rproj.user/
+.DS_Store
+Thumbs.db
