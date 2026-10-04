@@ -1,4 +1,9 @@
-"""Leakage-safe baseline models for hotel booking cancellation prediction."""
+"""Leakage-aware baseline models for hotel booking cancellation prediction.
+
+The target is separated before modelling, common booking/reservation identifiers are
+excluded automatically, optional dataset-specific leakage fields can be excluded from
+the CLI, and all learned preprocessing remains inside cross-validation pipelines.
+"""
 
 from __future__ import annotations
 
@@ -22,6 +27,14 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DATA = ROOT / "data" / "hotel_reservations.csv"
 OUTPUT_DIR = ROOT / "outputs"
 
+COMMON_IDENTIFIER_NAMES = {
+    "id",
+    "bookingid",
+    "bookingreference",
+    "reservationid",
+    "reservationreference",
+}
+
 
 def normalize_name(name: str) -> str:
     return "".join(ch for ch in name.lower() if ch.isalnum())
@@ -34,12 +47,21 @@ def infer_target(columns: list[str], requested: str | None) -> str:
         return requested
 
     normalized = {normalize_name(c): c for c in columns}
-    for candidate in ("bookingstatus", "reservationstatus", "cancellationstatus", "iscanceled", "iscancelled"):
+    for candidate in (
+        "bookingstatus",
+        "reservationstatus",
+        "cancellationstatus",
+        "iscanceled",
+        "iscancelled",
+    ):
         if candidate in normalized:
             return normalized[candidate]
-    raise ValueError(
-        "Could not infer the target column. Pass it explicitly with --target."
-    )
+    raise ValueError("Could not infer the target column. Pass it explicitly with --target.")
+
+
+def find_identifier_columns(columns: list[str]) -> list[str]:
+    """Return common booking/reservation identifier fields that should not be predictors."""
+    return [c for c in columns if normalize_name(c) in COMMON_IDENTIFIER_NAMES]
 
 
 def evaluate(y_true: pd.Series, y_pred: np.ndarray) -> dict[str, float]:
@@ -50,7 +72,11 @@ def evaluate(y_true: pd.Series, y_pred: np.ndarray) -> dict[str, float]:
     }
 
 
-def main(data_path: Path, requested_target: str | None) -> None:
+def main(
+    data_path: Path,
+    requested_target: str | None,
+    requested_drop_columns: list[str],
+) -> None:
     if not data_path.exists():
         raise FileNotFoundError(f"Missing {data_path}. See data/README.md.")
 
@@ -63,6 +89,20 @@ def main(data_path: Path, requested_target: str | None) -> None:
     y = df[target].astype(str)
     if y.nunique() < 2:
         raise ValueError("The cancellation target must contain at least two classes.")
+
+    unknown_drops = [c for c in requested_drop_columns if c not in x.columns]
+    if unknown_drops:
+        raise ValueError(
+            "Requested --drop-column fields are not present after target removal: "
+            + ", ".join(unknown_drops)
+        )
+
+    identifier_columns = find_identifier_columns(x.columns.tolist())
+    dropped_columns = list(dict.fromkeys(identifier_columns + requested_drop_columns))
+    if dropped_columns:
+        x = x.drop(columns=dropped_columns)
+    if x.shape[1] == 0:
+        raise ValueError("No predictors remain after excluding identifiers/leakage fields.")
 
     x_train, x_test, y_train, y_test = train_test_split(
         x,
@@ -141,7 +181,10 @@ def main(data_path: Path, requested_target: str | None) -> None:
     )
 
     results: dict[str, dict[str, object]] = {}
-    for name, search in (("logistic_regression", logistic_search), ("random_forest", forest_search)):
+    for name, search in (
+        ("logistic_regression", logistic_search),
+        ("random_forest", forest_search),
+    ):
         search.fit(x_train, y_train)
         predictions = search.predict(x_test)
         results[name] = {
@@ -155,9 +198,12 @@ def main(data_path: Path, requested_target: str | None) -> None:
         "target": target,
         "rows": int(len(df)),
         "classes": sorted(y.unique().tolist()),
+        "dropped_predictor_columns": dropped_columns,
         "evaluation": results,
     }
-    (OUTPUT_DIR / "metrics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    (OUTPUT_DIR / "metrics.json").write_text(
+        json.dumps(report, indent=2), encoding="utf-8"
+    )
     print(json.dumps(report, indent=2))
 
 
@@ -165,5 +211,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--target", type=str, default=None)
+    parser.add_argument(
+        "--drop-column",
+        action="append",
+        default=[],
+        help=(
+            "Predictor column to exclude because it is an identifier or would not be "
+            "available at prediction time. Repeat for multiple columns."
+        ),
+    )
     args = parser.parse_args()
-    main(args.data, args.target)
+    main(args.data, args.target, args.drop_column)
