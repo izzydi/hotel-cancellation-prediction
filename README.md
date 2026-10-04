@@ -1,4 +1,4 @@
-# Predicting and Reducing Hotel Booking Cancellations
+# Hotel Cancellation Prediction
 
 An applied machine-learning project focused on identifying the factors associated with hotel booking cancellations and translating the analysis into practical revenue-protection recommendations.
 
@@ -6,9 +6,10 @@ An applied machine-learning project focused on identifying the factors associate
 
 Hotel cancellations create avoidable revenue uncertainty. This project uses historical reservation data to investigate which booking characteristics are most strongly associated with cancellation and how those patterns could inform operational decisions.
 
-## Repository contents
+## Repository structure
 
-- [`hotel_cancellations_R_v07.ipynb`](hotel_cancellations_R_v07.ipynb) — complete analysis notebook.
+- [`hotel_cancellation_modeling.ipynb`](hotel_cancellation_modeling.ipynb) — primary analysis notebook.
+- [`.gitignore`](.gitignore) — excludes local notebook, Python and R environment artifacts.
 
 ## Dataset
 
@@ -28,19 +29,19 @@ The analysis works with hotel reservation features including:
 - special requests,
 - final booking status.
 
-The original data source is the Hotel Reservations Classification dataset on Kaggle; the project notes that the data used for the exercise were modified.
+The original source is the Hotel Reservations Classification dataset on Kaggle; the project notes that the exercise data were modified.
 
 ## Analytical objective
 
-The goal is to identify the variables that contribute most to whether a booking is fulfilled or cancelled, then use those findings to support recommendations aimed at reducing cancellation risk.
+The goal is to identify the variables that contribute most to whether a booking is fulfilled or cancelled and connect those findings to practical actions that could reduce cancellation exposure.
 
 ## Reproducing the analysis
 
-1. Open `hotel_cancellations_R_v07.ipynb` in a compatible Jupyter environment.
-2. Install the R/Python kernel and packages referenced by the notebook as required.
-3. Obtain the source dataset or the modified project dataset used by the notebook.
-4. Update any local data path and run the notebook sequentially.
+1. Open `hotel_cancellation_modeling.ipynb` in a compatible Jupyter environment.
+2. Install the R/Python kernel and packages referenced by the notebook.
+3. Obtain the source or modified project dataset used by the analysis.
+4. Update the local data path if required and run the notebook sequentially.
 
 ## Scope
 
-This repository is an applied portfolio project demonstrating how machine learning can be connected to a concrete hospitality business problem. It is not a deployed cancellation-scoring service.
+This is an applied portfolio project demonstrating how machine learning can be connected to a concrete hospitality business problem. It is not a deployed cancellation-scoring service.
