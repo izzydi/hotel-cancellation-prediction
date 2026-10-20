@@ -10,6 +10,31 @@ An applied machine-learning project focused on identifying booking characteristi
 
 The script tunes a balanced Logistic Regression baseline and a balanced Random Forest on training data only, then reports accuracy, balanced accuracy and weighted F1 on the untouched test set. Metrics and the list of excluded predictor columns are written to `outputs/metrics.json`.
 
+## Results (original R notebook)
+
+The exact modified CSV is not in the repository, so the current Python script has not been re-run on it. The results below are the saved outputs of the original R/tidymodels analysis preserved in [`archive/hotel_cancellation_modeling.ipynb`](archive/hotel_cancellation_modeling.ipynb):
+
+- 27,511 bookings after removing rows with missing values (32.8% cancelled).
+- 75/25 stratified train/test split.
+- Hyperparameters tuned on an 80/20 validation split of the training data.
+- Preprocessing kept inside tidymodels recipes.
+- Test set (6,879 bookings) used once, for the final fit.
+
+| Model | Validation ROC AUC | Test ROC AUC | Test accuracy |
+|---|---|---|---|
+| Penalised logistic regression (lasso) | 0.861 | – | – |
+| XGBoost | 0.942 | – | – |
+| **Random Forest** (`mtry = 5`, `min_n = 7`, 1,000 trees) | **0.945** | **0.957** | **0.900** |
+
+For reference, always predicting "not cancelled" gives 0.672 accuracy. Validation and test ROC AUC are close, so the validation-based model choice held up on unseen data. The strongest predictors were lead time, average room price, number of special requests, arrival month and date, and market segment.
+
+<p align="center">
+  <img src="figures/historical_test_roc.png" width="45%" alt="Test-set ROC curve of the final Random Forest">
+  <img src="figures/historical_variable_importance.png" width="45%" alt="Random Forest variable importance">
+</p>
+
+These figures are the original notebook outputs, unchanged. When the exact CSV is available again, this section should be replaced with the output of `src/hotel_cancellation_model.py`.
+
 ## Leakage safeguards
 
 - The target is removed before predictor processing.
@@ -26,6 +51,7 @@ The script tunes a balanced Logistic Regression baseline and a balanced Random F
 - [`data/README.md`](data/README.md) — expected dataset layout and provenance limitations.
 - [`requirements.txt`](requirements.txt) — pinned direct Python dependencies.
 - [`archive/hotel_cancellation_modeling.ipynb`](archive/hotel_cancellation_modeling.ipynb) — original exploratory notebook retained for provenance.
+- [`figures/`](figures/) — ROC curve and variable importance exported unchanged from the original notebook.
 
 ## Dataset
 
