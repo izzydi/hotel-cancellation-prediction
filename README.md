@@ -1,5 +1,7 @@
 # Hotel Cancellation Prediction
 
+[![Python CI](https://github.com/izzydi/hotel-cancellation-prediction/actions/workflows/ci.yml/badge.svg)](https://github.com/izzydi/hotel-cancellation-prediction/actions/workflows/ci.yml)
+
 An applied machine-learning project focused on identifying booking characteristics associated with hotel cancellations and connecting those patterns to practical revenue-protection decisions.
 
 ## Primary workflow
